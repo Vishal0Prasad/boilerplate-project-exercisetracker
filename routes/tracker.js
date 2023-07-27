@@ -7,12 +7,12 @@ const validateExercise = require("../middleware/exercise");
 
 //import controllers
 const { createUser, fetchUser } = require("../controller/user");
-const { createExercise, fetchExercises } = requrie("../controller/exercise");
+const { createExercise, fetchExercises } = require("../controller/exercise");
 
 //user apis
 router.route("/")
-.get(fetchUser)
 .post(validateUser, createUser)
+.get(fetchUser)
 
 //fetch exercises
 router.route("/:_id/logs")

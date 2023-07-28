@@ -14,12 +14,12 @@ router.route("/")
 .post(validateUser, createUser)
 .get(fetchUser)
 
+//create exercise
+router.route("/:_id/exercises")
+.post(createExercise);
+
 //fetch exercises
 router.route("/:_id/logs")
 .get(fetchExercises);
-
-//create exercise
-router.route("/:_id/exercises")
-.post(validateExercise, createExercise);
 
 module.exports = router;

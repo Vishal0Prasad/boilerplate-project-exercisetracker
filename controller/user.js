@@ -9,7 +9,7 @@ function createUser(req, res){
 
     newUser.save()
     .then((user) => {
-        console.log("Successfull created the user!");
+        console.log("Successfully created the user!");
         res.send({
             username: user.username,
             _id: user._id
@@ -21,8 +21,32 @@ function createUser(req, res){
 
 }
 
-function fetchUser(){
+function fetchUser(req, res){
     //fetch user
+    const username = req.body.username;
+
+    UserModel.find({
+        username: username
+    })
+    .select({
+        uesrname: 1,
+        _id: 1
+    })
+    .exec(function(err,data){
+        if(err){
+            res.send("No users!")
+        }
+        else{
+            res.send(data)
+        }
+    })
+    .catch((err) => {
+        console.log("Error in fetching the data", err)
+        res.send({
+            message: "Error in fetching the data"
+        })
+    })
+
 }
 
 module.exports = {

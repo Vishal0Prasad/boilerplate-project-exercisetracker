@@ -23,29 +23,26 @@ function createUser(req, res){
 
 function fetchUser(req, res){
     //fetch user
-    const username = req.body.username;
+    console.log("hello");
+    //const username = req.body.username;
 
-    UserModel.find({
-        username: username
-    })
-    .select({
-        uesrname: 1,
-        _id: 1
-    })
-    .exec(function(err,data){
+    //if username given then filter the record otherwise fetch all
+    UserModel.find({})
+    .exec(function(err,users){
         if(err){
-            res.send("No users!")
+            res.send("No users!");
         }
         else{
-            res.send(data)
+            res.send(users)
         }
     })
-    .catch((err) => {
-        console.log("Error in fetching the data", err)
-        res.send({
-            message: "Error in fetching the data"
-        })
-    })
+    //Don't put catch here as find can be null and null.catch() is nothing
+    // .catch((err) => {
+    //     console.log("Error in fetching users", err)
+    //     res.send({
+    //         message: err.message
+    //     })
+    // })
 
 }
 

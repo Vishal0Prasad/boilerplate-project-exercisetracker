@@ -15,11 +15,11 @@ router.route("/")
 .get(fetchUser)
 
 //create exercise
-router.route("/:_id/exercises")
+router.route("/:id/exercises")
 .post(createExercise);
 
 //fetch exercises
-router.route("/:_id/logs")
+router.route("/:id/logs")
 .get(fetchExercises);
 
 module.exports = router;

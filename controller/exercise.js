@@ -2,78 +2,84 @@ const ExerciseModel = require("../models/exercise");
 const UserModel = require("../models/user");
 
 function validateDate(date){
+    let checkedDate = new Date(date);
+    if(checkedDate instanceof Date && !isNaN(checkedDate))
+        return true
+    // if(!date || !Date.parse(date))
+    //     return false;
 
-    if(!date || !Date.parse(date))
-        return false;
+    // const dateSplit = date.split("-");
+    // const dateObj = new Date(date);
+    // const day = dateObj.getDate();
+    // const month = dateObj.getMonth();
+    // const year = dateObj.getFullYear();
 
-    const dateSplit = date.split("-");
-    const dateObj = new Date(date);
-    const day = dateObj.getDate();
-    const month = dateObj.getMonth();
-    const year = dateObj.getFullYear();
-
-    if(Number(dateSplit[0]) === year && Number(dateSplit[1]) === month && Number(dateSplit(2) === day))
-        return true;
+    // if(Number(dateSplit[0]) === year && Number(dateSplit[1]) === month && Number(dateSplit(2) === day))
+    //     return true;
 
     return false;
 }
 
-function createExercise(req, res){
+async function createExercise(req, res){
     //create exercise
-    const id = req.params._id;
+    const id = req.params.id;
     const { description, duration, date } = req.body;
 
+    // console.log(req.body);
+
     const dateObj = validateDate(date) ? new Date(date) : new Date();
-
-    const newExercise = new ExerciseModel({
-        userId: id,
-        description: description,
-        duration: Number(duration),
-        date: dateObj
-    })
-
-    newExercise.save()
-    .then((exercise) => {
-        UserModel.findById({
-            _id: exercise.userId
-        }, function(err, user){
-            if(err){
-                console.log("Error in fetching the user!");
-                res.send("Something went wrong!");
+    
+    UserModel.findById(id, function(err, user){
+        if(err)
+            return
+        
+        if(user){
+            console.log("user--",user);
+            try{
+                const newExercise = new ExerciseModel({
+                    userId: id,
+                    description: description,
+                    duration: duration,
+                    date: dateObj
+                })
+                console.log(newExercise);
+                newExercise.save()
+                .then((exercise) => {
+                    console.log("exercise--",exercise)
+                    
+                    res.send({
+                        _id: user._id,
+                        username: user.username,
+                        date: exercise.date.toDateString(),
+                        duration: exercise.duration,
+                        description: exercise.description
+                    })    
+                })
+                .catch((err) => {
+                    res.send(err.message);
+                })
             }
-            else{
-
-                res.send({
-                    _id: user._id,
-                    username: user.username,
-                    date: exercise.date,
-                    duration: exercise.duration,
-                    description: exercise.description
-                })    
+            catch(err){
+                res.send(err);
             }
-        })
+
+        }
     })
-    .catch((err) => {
-        console.log("Exercise could not be created!", err);
-        res.send({
-            message: "Exercise could not be created!"
-        })
-    })
+
 }   
 
 function fetchExercises(req, res){
     //fetch exercise
-    const id = req.params._id;
-    const { from, to, limit } = req.query;
+    const id = req.params.id;
+    // let { from, to, limit } = req.query;
+    const from = req.query.from ? new Date(req.query.from) : new Date(0);
+    const to = req.query.to ? new Date(req.query.to): new Date(Date.now());
+    const limit = Number(req.query.limit) || 0;
+    console.log(from, to, limit);
 
-    UserModel.findById({
-        _id: id
-    }, function(err,user){
+    UserModel.findById(id, function(err,user){
         if(err){
-            throw {
-                message: "Unable to find user",
-                code: "USER_NOTFOUND"
-            }
+            return res.send(err.message);
         }  
 
         //Alternative method using mongodb query pipeline. Works the same. Replaces the find and select methods
@@ -91,7 +97,7 @@ function fetchExercises(req, res){
         //     }
         // ])
         ExerciseModel.find({
-            userId : String(user._id),
+            userId : id,
             date: {
                 $gte: from,
                 $lte: to
@@ -103,29 +109,39 @@ function fetchExercises(req, res){
             duration: 1,
             date: 1
         })
-        .sort({
-            date: -1
-        })
+        .sort('-date')
         .limit(limit)
         .exec(function(err, data){
-            console.log(data);
+            console.log("data",data);
             if(err){
                 console.log(err);
-                throw {
-                    message: "Cannot fetch exercises",
-                    code: "EXER_NOTFOUND"
-                }
+                return res.send(err.message);
+                // throw {
+                //     message: "Cannot fetch exercises",
+                //     code: "EXER_NOTFOUND"
+                // }
+                
             }
+            let output = [];
             //update the dates
-            data.forEach((datum) => {
-                datum.date = datum.date.toDateString();
-            })
+            if(data.length > 0){
+                data.forEach((datum) => {
+                    // console.log("im date!");
+                    output.push({
+                        description: datum.description,
+                        duration: datum.duration,
+                        date: datum.date.toDateString()
+                    })
+                    // datum['date'] = new Date(datum['date']).toDateString();
+                })
+            }
+            // console.log(data);
 
             res.send({
                 username: user.username,
                 count: data.length,
                 _id: user._id,
-                log: [...data]
+                log: output
             })
         })
     })
